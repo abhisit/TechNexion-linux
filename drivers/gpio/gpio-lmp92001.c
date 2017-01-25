@@ -1,7 +1,7 @@
 /*
  * gpio-lmp92001.c -- Support for TI LMP92001 GPIOs
  *
- * Copyright 20016 Celestica Ltd.
+ * Copyright 2016 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *

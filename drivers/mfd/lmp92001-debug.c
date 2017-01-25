@@ -1,7 +1,7 @@
 /*
  * lmp92001-debug.c -- Debug file system for TI 92001
  *
- * Copyright 20016 Celestica Ltd.
+ * Copyright 2016 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *

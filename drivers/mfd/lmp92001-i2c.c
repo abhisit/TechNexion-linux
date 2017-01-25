@@ -1,7 +1,7 @@
 /*
  * lmp92001-i2c.c  --  I2C access for TI LMP92001
  *
- * Copyright 20016 Celestica Ltd.
+ * Copyright 2016 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *

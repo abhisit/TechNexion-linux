@@ -1,7 +1,7 @@
 /*
  * lmp92001-adc.c -- Support for TI LMP92001 ADCs
  *
- * Copyright 20016 Celestica Ltd.
+ * Copyright 2016 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *
@@ -17,6 +17,7 @@
 #include <linux/iio/iio.h>
 #include <linux/mfd/core.h>
 #include <linux/platform_device.h>
+#include <linux/interrupt.h>
 
 #include <linux/mfd/lmp92001/core.h>
 
@@ -31,45 +32,37 @@ static int lmp92001_read_raw(struct iio_dev *indio_dev,
         ret = regmap_read(lmp92001->regmap, LMP92001_CGEN, &cgen);
         if (ret < 0)
                 return ret;
-        else
+
+        /*
+         * Is not continuous conversion?
+         * Lock the registers (if needed).
+         * Triggering single-short conversion.
+         * Waiting for conversion successfully.
+         */
+        if (!(cgen & 1))
         {
-                /*
-                 * Is no continuous conversion?
-                 * Lock the registers.
-                 * Start single-short conversion.
-                 * Unlock the registers.
-                 * Waiting for conversion successfully.
-                 */
-                if (!(cgen & 1))
+                if (!(cgen & 2))
                 {
-                        if (cgen & 2)
-                                return -EBUSY;
-
                         ret = regmap_update_bits(lmp92001->regmap,
-                                        LMP92001_CGEN, 2, 2);
+                                                        LMP92001_CGEN, 2, 2);
                         if (ret < 0)
                                 return ret;
-
-                        ret = regmap_update_bits(lmp92001->regmap,
-                                                        LMP92001_CTRIG, 1, 1);
-                        if (ret < 0)
-                                return ret;
-
-                        ret = regmap_update_bits(lmp92001->regmap,
-                                                        LMP92001_CGEN, 2, 0);
-                        if (ret < 0)
-                                return ret;
-
-                        try = 10;
-                        do {
-                                ret = regmap_read(lmp92001->regmap,
-                                                        LMP92001_SGEN, &sgen);
-                                if(ret < 0)
-                                        return ret;
-                        } while ((sgen & 1<<7) && (--try > 0));
-                        if (!try)
-                                return -ETIME;
                 }
+
+                ret = regmap_write(lmp92001->regmap, LMP92001_CTRIG, 1);
+                if (ret < 0)
+                        return ret;
+
+                try = 10;
+                do {
+                        ret = regmap_read(lmp92001->regmap,
+                                                LMP92001_SGEN, &sgen);
+                        if(ret < 0)
+                                return ret;
+                } while ((sgen & 1<<7) && (--try > 0));
+
+                if (!try)
+                        return -ETIME;
         }
 
         ret = regmap_read(lmp92001->regmap, 0x1F + channel->channel, &code);
@@ -105,7 +98,7 @@ static const struct iio_info lmp92001_info = {
         .driver_module = THIS_MODULE,
 };
 
-ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
+static ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
@@ -119,7 +112,7 @@ ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
         return sprintf(buf, "%s\n", cref & 2 ? "external" : "internal");
 }
 
-ssize_t lmp92001_avref_write(struct iio_dev *indio_dev, uintptr_t private,
+static ssize_t lmp92001_avref_write(struct iio_dev *indio_dev, uintptr_t private,
                          struct iio_chan_spec const *channel, const char *buf,
                          size_t len)
 {
@@ -141,7 +134,7 @@ ssize_t lmp92001_avref_write(struct iio_dev *indio_dev, uintptr_t private,
         return len;
 }
 
-ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private,
+static ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
@@ -179,7 +172,7 @@ ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private,
         return sprintf(buf, "%s\n", cad & 1 ? "enable" : "disable");
 }
 
-ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t private,
+static ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t private,
                          struct iio_chan_spec const *channel, const char *buf,
                          size_t len)
 {
@@ -222,6 +215,55 @@ ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t private,
         return len;
 }
 
+static ssize_t lmp92001_mode_read(struct iio_dev *indio_dev, uintptr_t private,
+                        struct iio_chan_spec const *channel, char *buf)
+{
+        struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
+        unsigned int cgen;
+        int ret;
+
+        ret = regmap_read(lmp92001->regmap, LMP92001_CGEN, &cgen);
+        if (ret < 0)
+                return ret;
+
+        return sprintf(buf, "%s\n", cgen & 1 ? "continuous" : "single-shot");
+}
+
+static ssize_t lmp92001_mode_write(struct iio_dev *indio_dev, uintptr_t private,
+                         struct iio_chan_spec const *channel, const char *buf,
+                         size_t len)
+{
+        struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
+        unsigned int cgen;
+        int ret;
+
+        if (strcmp("continuous\n", buf) == 0)
+                cgen = 1;
+        else if (strcmp("single-shot\n", buf) == 0)
+                cgen = 0;
+        else
+                return -EINVAL;
+
+        /*
+         * Unlock the registers.
+         * Set conversion mode.
+         * Lock the registers.
+         */
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 2, 0);
+        if (ret < 0)
+                return ret;
+
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 1, cgen);
+        if (ret < 0)
+                return ret;
+
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 2, 2);
+        if (ret < 0)
+                return ret;
+
+        return len;
+}
+
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         {
                 .name = "vref",
@@ -234,6 +276,12 @@ static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
                 .read = lmp92001_enable_read,
                 .write = lmp92001_enable_write,
                 .shared = IIO_SEPARATE,
+        },
+        {
+                .name = "mode",
+                .read = lmp92001_mode_read,
+                .write = lmp92001_mode_write,
+                .shared = IIO_SHARED_BY_ALL,
         },
         { },
 };
@@ -258,6 +306,13 @@ static const struct iio_event_spec lmp92001_events[] = {
 { \
         .channel = _ch, \
         .scan_index = _ch, \
+        .scan_type = { \
+                        .sign = 'u', \
+                        .realbits = 12, \
+                        .storagebits = 16, \
+                        .repeat = 1, \
+                        .endianness = IIO_BE, \
+        }, \
         .type = _type, \
         .indexed = 1, \
         .info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
@@ -296,7 +351,7 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
         struct iio_dev *indio_dev;
         struct device_node *np = pdev->dev.of_node;
         const char *conversion;
-        unsigned int cgen, cad1, cad2, cad3;
+        unsigned int cgen = 0, cad1, cad2, cad3;
         u32 mask;
         int ret;
 
@@ -307,10 +362,18 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
         iio_device_set_drvdata(indio_dev, lmp92001);
 
         indio_dev->name = pdev->name;
+        indio_dev->dev.parent = &pdev->dev;
         indio_dev->modes = INDIO_DIRECT_MODE;
         indio_dev->info = &lmp92001_info;
         indio_dev->channels = lmp92001_adc_channels;
         indio_dev->num_channels = ARRAY_SIZE(lmp92001_adc_channels);
+
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 0x80, 0x80);
+        if (ret < 0)
+        {
+                dev_err(&pdev->dev,"failed to self reset all registers\n");
+                return ret;
+        }
 
         ret = of_property_read_u32(np, "ti,lmp92001-adc-mask", &mask);
         if (ret < 0)
@@ -346,46 +409,29 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
                 return ret;
         }
 
-        ret = regmap_read(lmp92001->regmap, LMP92001_CGEN, &cgen);
-        if (ret < 0)
-        {
-                dev_err(&pdev->dev, "failed to reading CGEN.LCK and CGEN.START\n");
-                return ret;
-        }
-
         ret = of_property_read_string_index(np, "ti,lmp92001-adc-mode", 0,
                                                 &conversion);
-        if (ret < 0)
-                goto singleshort;
-
-        if (strcmp("continuous", conversion) == 0)
+        if (!ret)
         {
-                /*
-                 * Lock the registers.
-                 * Start continuous conversion.
-                 * Unlock the registers.
-                 */
-                if (cgen & 2)
-                        return -EBUSY;
-
-                ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 2, 2);
-                if (ret < 0)
-                        return ret;
-
-                ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 1, 1);
-                if (ret < 0)
-                        return ret;
-
-                ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 2, 0);
-                if (ret < 0)
-                        return ret;
+                if (strcmp("continuous", conversion) == 0)
+                        cgen |= 1;
+                else if (strcmp("single-shot", conversion) == 0)
+                        { /* Okay */ }
+                else
+                        dev_info(&pdev->dev,
+                        "wrong adc mode! set to single-short conversion\n");
         }
-        else if (strcmp("single-short", conversion) != 0)
-        {
-singleshort:
+        else
                 dev_info(&pdev->dev,
-                        "single-short conversion was chosen by default\n");
-        }
+                "single-short conversion was chosen by default\n");
+
+        /*
+         * Lock the registers and set conversion mode.
+         */
+        ret = regmap_update_bits(lmp92001->regmap,
+                                        LMP92001_CGEN, 3, cgen | 2);
+        if (ret < 0)
+                return ret;
 
         platform_set_drvdata(pdev, indio_dev);
 

@@ -1,7 +1,7 @@
 /*
  * lmp92001-core.c  --  Device access for TI LMP92001
  *
- * Copyright 20016 Celestica Ltd.
+ * Copyright 2016 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *
@@ -213,6 +213,7 @@ static bool lmp92001_reg_volatile(struct device *dev, unsigned int reg)
         case LMP92001_SGPI:
         case LMP92001_SHIL:
         case LMP92001_SLOL:
+        case LMP92001_CGEN:
         case LMP92001_ADC1:
         case LMP92001_ADC2:
         case LMP92001_ADC3:
