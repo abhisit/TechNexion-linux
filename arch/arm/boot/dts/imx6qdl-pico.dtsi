@@ -238,6 +238,29 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c1>;
 	status = "okay";
+
+        lmp92001@20 {
+                compatible = "ti,lmp92001";
+                reg = <0x20>;
+
+                lmp92001-gpio {
+                        compatible = "ti,lmp92001-gpio";
+                        ti,lmp92001-gpio-dir = /bits/ 8 <0xff>;
+                };
+
+                lmp92001-adc {
+                        compatible = "ti,lmp92001-adc";
+                        ti,lmp92001-adc-mode = "continuous";
+                        ti,lmp92001-adc-mask = <0x00000079>;
+                };
+
+                lmp92001-dac {
+                        compatible = "ti,lmp92001-dac";
+                        ti,lmp92001-dac-hiz  = /bits/ 8 <0>;
+                        ti,lmp92001-dac-outx = /bits/ 8 <0>;
+                        ti,lmp92001-dac-gang = /bits/ 8 <0>;
+                };
+        };
 };
 
 &i2c2 {
