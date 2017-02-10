@@ -55,7 +55,7 @@
 		reg = <0x20>;
 		lmp92001-gpio {
                         compatible = "ti,lmp92001-gpio";
-                        ti,lmp92001-gpio-dir = /bits/ 8 <0xfc>;
+                        ti,lmp92001-gpio-dir = /bits/ 8 <0xff>;
 		};
 		lmp92001-adc {
                         compatible = "ti,lmp92001-adc";
