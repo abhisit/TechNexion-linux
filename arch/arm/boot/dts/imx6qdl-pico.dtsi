@@ -299,7 +299,10 @@
 
 &iomuxc {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hog_1>;
+	pinctrl-0 = <
+	       &pinctrl_hog_1
+	       &pinctrl_ext_gpio_hobbit
+       >;
 
 	imx6qdl-pico {
 
