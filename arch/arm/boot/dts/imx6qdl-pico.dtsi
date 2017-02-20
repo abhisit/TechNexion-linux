@@ -134,9 +134,15 @@
 		};
 	};
 
-	gpio-edm {
-		compatible = "gpio-edm";
+	load-card-leds {
+		compatible = "gpio-leds";
 
+                active-load {
+                        label = "active-load";
+                        gpios = <&lmp92001_gpio 0 GPIO_ACTIVE_HIGH>;
+                        default-state = "off";
+                        linux,default-trigger = "oneshot";
+                };
 	};
 
 	sound-hdmi {
@@ -243,8 +249,10 @@
                 compatible = "ti,lmp92001";
                 reg = <0x20>;
 
-                lmp92001-gpio {
+                lmp92001_gpio: lmp92001-gpio {
                         compatible = "ti,lmp92001-gpio";
+                        gpio-controller;
+                        #gpio-cells = <2>;
                         ti,lmp92001-gpio-dir = /bits/ 8 <0xff>;
                 };
 
