@@ -148,14 +148,12 @@
                         label = "load:blue:over-current";
                         gpios = <&lmp92001_gpio 0 GPIO_ACTIVE_HIGH>;
                         default-state = "off";
-                        linux,default-trigger = "timer";
                 };
 
                 temp {
                         label = "temp:green:over-temperature";
                         gpios = <&lmp92001_gpio 1 GPIO_ACTIVE_HIGH>;
                         default-state = "off";
-                        linux,default-trigger = "timer";
                 };
 	};
 
