@@ -141,7 +141,12 @@
                         label = "fault:red:malfunction";
                         gpios = <&gpio5 20 GPIO_ACTIVE_HIGH>;
                         default-state = "off";
-                        linux,default-trigger = "timer";
+                        /*
+                         * Timer trigger is always blinking by 50% period,
+                         * and we did not clear, what is event for this.
+                         *
+                         * linux,default-trigger = "timer";
+                         */
                 };
 
                 load {
