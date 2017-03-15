@@ -280,16 +280,6 @@
                         ti,lmp92001-dac-gang = /bits/ 8 <0>;
                 };
         };
-
-        lm75b@4a {
-                compatible = "ti,lm75b";
-                reg = <0x4a>;
-        };
-
-        lm75b@49 {
-                compatible = "ti,lm75b";
-                reg = <0x49>;
-        };
 };
 
 &i2c2 {
