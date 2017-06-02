@@ -858,6 +858,14 @@ config GPIO_LMP92001
 	  Say yes here to access the GPIO signals of TI LMP92001 Analog System
 	  Monitor and Controller.
 
+config GPIO_LMP92001_IRQ
+        bool "Interrupt controller support for LMP92001"
+        depends on GPIO_LMP92001=y
+        select GPIOLIB_IRQCHIP
+        help
+          Say yes here to enable the lmp92001 to be used as an interrupt
+          controller. It requires the driver to be built in the kernel.
+
 endmenu
 
 menu "PCI GPIO expanders"

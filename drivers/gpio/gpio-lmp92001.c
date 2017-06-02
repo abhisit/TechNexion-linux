@@ -148,6 +148,42 @@ static struct gpio_chip lmp92001_gpio_chip = {
         .dbg_show               = lmp92001_gpio_dbg_show,
 };
 
+#ifdef CONFIG_GPIO_LMP92001_IRQ
+static struct irq_chip lmp92001_irq_chip = {
+        .name                   = "lmp92001-gpio",
+        .irq_mask               = lmp92001_irq_mask,
+        .irq_unmask             = lmp92001x_irq_unmask,
+        .irq_bus_lock           = lmp92001_irq_bus_lock,
+        .irq_bus_sync_unlock    = lmp92001_irq_bus_sync_unlock,
+        .irq_set_type           = lmp92001_irq_set_type,
+};
+
+static int lmp92001_irq_setup(struct gpio_chip *chip)
+{
+        struct lmp92001_gpio *lmp92001_gpio = to_lmp92001_gpio(chip);
+        struct lmp92001 *lmp92001 = lmp92001_gpio->lmp92001;
+
+        /**
+         * Refer to gpio-max732x.c and gpio-adp5588.c and delete me too!
+         */
+
+        devm_request_threaded_irq();
+        gpiochip_irqchip_add();
+
+        gpiochip_set_chained_irqchip()??
+}
+#else
+static int lmp92001_irq_setup(struct gpio_chip *chip)
+{
+        struct lmp92001_gpio *lmp92001_gpio = to_lmp92001_gpio(chip);
+        struct lmp92001 *lmp92001 = lmp92001_gpio->lmp92001;
+
+        dev_warn(lmp92001->dev, "interrupt support not compiled in\n");
+
+        return 0;
+}
+#endif /* CONFIG_GPIO_LMP92001_IRQ */
+
 static int lmp92001_gpio_probe(struct platform_device *pdev)
 {
         struct lmp92001 *lmp92001 = dev_get_drvdata(pdev->dev.parent);
@@ -181,6 +217,8 @@ static int lmp92001_gpio_probe(struct platform_device *pdev)
                 dev_err(&pdev->dev, "Could not register gpiochip, %d\n", ret);
                 return ret;
         }
+
+        lmp92001_irq_setup(&lmp92001_gpio->gpio_chip);
 
         platform_set_drvdata(pdev, lmp92001_gpio);
 
