@@ -418,7 +418,7 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
                 else if (strcmp("single-shot", conversion) == 0)
                         { /* Okay */ }
                 else
-                        dev_info(&pdev->dev,
+                        dev_warn(&pdev->dev,
                         "wrong adc mode! set to single-short conversion\n");
         }
         else
