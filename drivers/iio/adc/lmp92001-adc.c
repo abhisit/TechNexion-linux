@@ -170,17 +170,21 @@ static const struct iio_info lmp92001_info = {
         .driver_module = THIS_MODULE,
 };
 
-static ssize_t lmp92001_limit_en_read(struct iio_dev *indio_dev,
-                        uintptr_t private, struct iio_chan_spec const *channel,
-                        char *buf)
+static const char * const lmp92001_enable_disable_opts[] = {
+        [1] = "enable",
+        [0] = "disable",
+};
+
+static int lmp92001_limit_en_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int reg, cinx;
         int ret;
 
-        if (strcmp("hi_limit_en\n", buf) == 0)
+        if (strcmp("hi_limit_en\n", channel->ext_info->name) == 0)
                 reg = LMP92001_CINH;
-        else if (strcmp("lo_limit_en\n", buf) == 0)
+        else if (strcmp("lo_limit_en\n", channel->ext_info->name) == 0)
                 reg = LMP92001_CINL;
         else
                 return -EINVAL;
@@ -213,20 +217,18 @@ static ssize_t lmp92001_limit_en_read(struct iio_dev *indio_dev,
                 return -EINVAL;
         }
 
-        return sprintf(buf, "%s\n", cinx ? "enable" : "disable");
+        return cinx ? 1 : 0;
 }
 
-static ssize_t lmp92001_limit_en_write(struct iio_dev *indio_dev,
-                        uintptr_t private, struct iio_chan_spec const *channel,
-                        const char *buf, size_t len)
+static int lmp92001_limit_en_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
-        unsigned int reg, cinx = 0;
-        int ret;
+        unsigned int reg, mask = 0;
 
-        if (strcmp("hi_limit_en\n", buf) == 0)
+        if (strcmp("hi_limit_en\n", channel->ext_info->name) == 0)
                 reg = LMP92001_CINH;
-        else if (strcmp("lo_limit_en\n", buf) == 0)
+        else if (strcmp("lo_limit_en\n", channel->ext_info->name) == 0)
                 reg = LMP92001_CINL;
         else
                 return -EINVAL;
@@ -234,33 +236,36 @@ static ssize_t lmp92001_limit_en_write(struct iio_dev *indio_dev,
         switch (channel->channel)
         {
         case 1:
-                cinx |= 0x01;
+                mask |= 0x01;
                 break;
         case 2:
-                cinx |= 0x02;
+                mask |= 0x02;
                 break;
         case 3:
-                cinx |= 0x04;
+                mask |= 0x04;
                 break;
         case 9:
-                cinx |= 0x08;
+                mask |= 0x08;
                 break;
         case 10:
-                cinx |= 0x10;
+                mask |= 0x10;
                 break;
         case 11:
-                cinx |= 0x20;
+                mask |= 0x20;
                 break;
         default:
                 return -EINVAL;
         }
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CINH, cinx, cinx);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, LMP92001_CINH, mask, mode);
 }
+
+static const struct iio_enum lmp92001_limit_en = {
+        .items = lmp92001_enable_disable_opts,
+        .num_items = ARRAY_SIZE(lmp92001_enable_disable_opts),
+        .get = lmp92001_limit_en_read,
+        .set = lmp92001_limit_en_write,
+};
 
 static ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
@@ -471,18 +476,10 @@ static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
                 .shared = IIO_SHARED_BY_ALL,
         },
         /* End of lmp92001_ext_info */
-        {
-                .name = "hi_limit_en",
-                .read = lmp92001_limit_en_read,
-                .write = lmp92001_limit_en_write,
-                .shared = IIO_SEPARATE,
-        },
-        {
-                .name = "lo_limit_en",
-                .read = lmp92001_limit_en_read,
-                .write = lmp92001_limit_en_write,
-                .shared = IIO_SEPARATE,
-        },
+        IIO_ENUM("hi_limit_en", IIO_SEPARATE, &lmp92001_limit_en),
+        IIO_ENUM_AVAILABLE("hi_limit_en", &lmp92001_limit_en),
+        IIO_ENUM("lo_limit_en", IIO_SEPARATE, &lmp92001_limit_en),
+        IIO_ENUM_AVAILABLE("lo_limit_en", &lmp92001_limit_en),
         { },
 };
 
