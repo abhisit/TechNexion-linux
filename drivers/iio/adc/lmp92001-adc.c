@@ -58,16 +58,18 @@ static irqreturn_t lmp92001_adc_isr(int irq, void *dev_id)
         struct iio_dev *indio_dev = dev_id;
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         s64 timestamp = iio_get_time_ns();
+        unsigned int shil, slol;
         unsigned long bit, sxxl;
         int ret;
 
         /**
          * High-Limit: if ADCx > LIHx
          */
-        ret = regmap_read(lmp92001->regmap, LMP92001_SHIL,
-                                (unsigned int *)&sxxl);
+        ret = regmap_read(lmp92001->regmap, LMP92001_SHIL, &shil);
         if (ret < 0)
                 return ret;
+
+        sxxl = shil;
 
         for_each_set_bit(bit, &sxxl, 8)
                 iio_push_event(indio_dev,
@@ -77,10 +79,11 @@ static irqreturn_t lmp92001_adc_isr(int irq, void *dev_id)
         /**
          * Low-Limit: if ADCx <= LIHx
          */
-        ret = regmap_read(lmp92001->regmap, LMP92001_SLOL,
-                                (unsigned int *)&sxxl);
+        ret = regmap_read(lmp92001->regmap, LMP92001_SLOL, &slol);
         if (ret < 0)
                 return ret;
+
+        sxxl = slol;
 
         for_each_set_bit(bit, &sxxl, 8)
                 iio_push_event(indio_dev,
