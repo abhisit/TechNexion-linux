@@ -171,8 +171,8 @@ static const struct iio_info lmp92001_info = {
 };
 
 static const char * const lmp92001_enable_disable_opts[] = {
-        [1] = "enable",
         [0] = "disable",
+        [1] = "enable",
 };
 
 static int lmp92001_limit_en_read(struct iio_dev *indio_dev,
@@ -260,15 +260,20 @@ static int lmp92001_limit_en_write(struct iio_dev *indio_dev,
         return regmap_update_bits(lmp92001->regmap, LMP92001_CINH, mask, mode);
 }
 
-static const struct iio_enum lmp92001_limit_en = {
+static const struct iio_enum lmp92001_limit_enum = {
         .items = lmp92001_enable_disable_opts,
         .num_items = ARRAY_SIZE(lmp92001_enable_disable_opts),
         .get = lmp92001_limit_en_read,
         .set = lmp92001_limit_en_write,
 };
 
-static ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static const char * const lmp92001_vref_opts[] = {
+        [0] = "internal",
+        [1] = "external",
+};
+
+static int lmp92001_avref_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cref;
@@ -278,30 +283,31 @@ static ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
         if (ret < 0)
                 return ret;
 
-        return sprintf(buf, "%s\n", cref & 2 ? "external" : "internal");
+        return cref & 2 ? 1 : 0;
 }
 
-static ssize_t lmp92001_avref_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_avref_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cref;
-        int ret;
 
-        if (strcmp("external\n", buf) == 0)
+        if (mode == 1)
                 cref = 2;
-        else if (strcmp("internal\n", buf) == 0)
+        else if (mode == 0)
                 cref = 0;
         else
                 return -EINVAL;
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CREF, 2, cref);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, LMP92001_CREF, 2, cref);
 }
+
+static const struct iio_enum lmp92001_vref_enum = {
+        .items = lmp92001_vref_opts,
+        .num_items = ARRAY_SIZE(lmp92001_vref_opts),
+        .get = lmp92001_avref_read,
+        .set = lmp92001_avref_write,
+};
 
 static ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
@@ -434,12 +440,8 @@ static ssize_t lmp92001_mode_write(struct iio_dev *indio_dev, uintptr_t private,
 }
 
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
-        {
-                .name = "vref",
-                .read = lmp92001_avref_read,
-                .write = lmp92001_avref_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_vref_enum),
+        IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
         {
                 .name = "en",
                 .read = lmp92001_enable_read,
@@ -457,12 +459,8 @@ static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
 
 static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
         /* Copy of lmp92001_ext_info */
-        {
-                .name = "vref",
-                .read = lmp92001_avref_read,
-                .write = lmp92001_avref_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_vref_enum),
+        IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
         {
                 .name = "en",
                 .read = lmp92001_enable_read,
@@ -476,10 +474,10 @@ static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
                 .shared = IIO_SHARED_BY_ALL,
         },
         /* End of lmp92001_ext_info */
-        IIO_ENUM("hi_limit_en", IIO_SEPARATE, &lmp92001_limit_en),
-        IIO_ENUM_AVAILABLE("hi_limit_en", &lmp92001_limit_en),
-        IIO_ENUM("lo_limit_en", IIO_SEPARATE, &lmp92001_limit_en),
-        IIO_ENUM_AVAILABLE("lo_limit_en", &lmp92001_limit_en),
+        IIO_ENUM("hi_limit_en", IIO_SEPARATE, &lmp92001_limit_enum),
+        IIO_ENUM_AVAILABLE("hi_limit_en", &lmp92001_limit_enum),
+        IIO_ENUM("lo_limit_en", IIO_SEPARATE, &lmp92001_limit_enum),
+        IIO_ENUM_AVAILABLE("lo_limit_en", &lmp92001_limit_enum),
         { },
 };
 
