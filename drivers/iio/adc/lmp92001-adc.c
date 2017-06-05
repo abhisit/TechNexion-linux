@@ -178,9 +178,9 @@ static ssize_t lmp92001_limit_en_read(struct iio_dev *indio_dev,
         unsigned int reg, cinx;
         int ret;
 
-        if (strcmp("hi-limit-en\n", buf) == 0)
+        if (strcmp("hi_limit_en\n", buf) == 0)
                 reg = LMP92001_CINH;
-        else if (strcmp("lo-limit-en\n", buf) == 0)
+        else if (strcmp("lo_limit_en\n", buf) == 0)
                 reg = LMP92001_CINL;
         else
                 return -EINVAL;
@@ -224,9 +224,9 @@ static ssize_t lmp92001_limit_en_write(struct iio_dev *indio_dev,
         unsigned int reg, cinx = 0;
         int ret;
 
-        if (strcmp("hi-limit-en\n", buf) == 0)
+        if (strcmp("hi_limit_en\n", buf) == 0)
                 reg = LMP92001_CINH;
-        else if (strcmp("lo-limit-en\n", buf) == 0)
+        else if (strcmp("lo_limit_en\n", buf) == 0)
                 reg = LMP92001_CINL;
         else
                 return -EINVAL;
@@ -472,7 +472,13 @@ static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
         },
         /* End of lmp92001_ext_info */
         {
-                .name = "hi-limit-en",
+                .name = "hi_limit_en",
+                .read = lmp92001_limit_en_read,
+                .write = lmp92001_limit_en_write,
+                .shared = IIO_SEPARATE,
+        },
+        {
+                .name = "lo_limit_en",
                 .read = lmp92001_limit_en_read,
                 .write = lmp92001_limit_en_write,
                 .shared = IIO_SEPARATE,
