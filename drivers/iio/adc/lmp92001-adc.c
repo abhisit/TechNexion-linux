@@ -170,6 +170,98 @@ static const struct iio_info lmp92001_info = {
         .driver_module = THIS_MODULE,
 };
 
+static ssize_t lmp92001_limit_en_read(struct iio_dev *indio_dev,
+                        uintptr_t private, struct iio_chan_spec const *channel,
+                        char *buf)
+{
+        struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
+        unsigned int reg, cinx;
+        int ret;
+
+        if (strcmp("hi-limit-en\n", buf) == 0)
+                reg = LMP92001_CINH;
+        else if (strcmp("lo-limit-en\n", buf) == 0)
+                reg = LMP92001_CINL;
+        else
+                return -EINVAL;
+
+        ret = regmap_read(lmp92001->regmap, reg, &cinx);
+        if (ret < 0)
+                return ret;
+
+        switch (channel->channel)
+        {
+        case 1:
+                cinx &= 0x01;
+                break;
+        case 2:
+                cinx &= 0x02;
+                break;
+        case 3:
+                cinx &= 0x04;
+                break;
+        case 9:
+                cinx &= 0x08;
+                break;
+        case 10:
+                cinx &= 0x10;
+                break;
+        case 11:
+                cinx &= 0x20;
+                break;
+        default:
+                return -EINVAL;
+        }
+
+        return sprintf(buf, "%s\n", cinx ? "enable" : "disable");
+}
+
+static ssize_t lmp92001_limit_en_write(struct iio_dev *indio_dev,
+                        uintptr_t private, struct iio_chan_spec const *channel,
+                        const char *buf, size_t len)
+{
+        struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
+        unsigned int reg, cinx = 0;
+        int ret;
+
+        if (strcmp("hi-limit-en\n", buf) == 0)
+                reg = LMP92001_CINH;
+        else if (strcmp("lo-limit-en\n", buf) == 0)
+                reg = LMP92001_CINL;
+        else
+                return -EINVAL;
+
+        switch (channel->channel)
+        {
+        case 1:
+                cinx |= 0x01;
+                break;
+        case 2:
+                cinx |= 0x02;
+                break;
+        case 3:
+                cinx |= 0x04;
+                break;
+        case 9:
+                cinx |= 0x08;
+                break;
+        case 10:
+                cinx |= 0x10;
+                break;
+        case 11:
+                cinx |= 0x20;
+                break;
+        default:
+                return -EINVAL;
+        }
+
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CINH, cinx, cinx);
+        if (ret < 0)
+                return ret;
+
+        return len;
+}
+
 static ssize_t lmp92001_avref_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
 {
@@ -358,6 +450,36 @@ static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         { },
 };
 
+static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
+        /* Copy of lmp92001_ext_info */
+        {
+                .name = "vref",
+                .read = lmp92001_avref_read,
+                .write = lmp92001_avref_write,
+                .shared = IIO_SHARED_BY_ALL,
+        },
+        {
+                .name = "en",
+                .read = lmp92001_enable_read,
+                .write = lmp92001_enable_write,
+                .shared = IIO_SEPARATE,
+        },
+        {
+                .name = "mode",
+                .read = lmp92001_mode_read,
+                .write = lmp92001_mode_write,
+                .shared = IIO_SHARED_BY_ALL,
+        },
+        /* End of lmp92001_ext_info */
+        {
+                .name = "hi-limit-en",
+                .read = lmp92001_limit_en_read,
+                .write = lmp92001_limit_en_write,
+                .shared = IIO_SEPARATE,
+        },
+        { },
+};
+
 static const struct iio_event_spec lmp92001_events[] = {
         {
                 .type = IIO_EV_TYPE_THRESH,
@@ -374,7 +496,7 @@ static const struct iio_event_spec lmp92001_events[] = {
         { },
 };
 
-#define LMP92001_CHAN_SPEC(_ch, _type, _event, _nevent) \
+#define LMP92001_CHAN_SPEC(_ch, _type, _event, _nevent, _extinfo) \
 { \
         .channel = _ch, \
         .scan_index = _ch, \
@@ -390,7 +512,7 @@ static const struct iio_event_spec lmp92001_events[] = {
         .info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
         .event_spec = _event, \
         .num_event_specs = _nevent, \
-        .ext_info = lmp92001_ext_info, \
+        .ext_info = _extinfo, \
 }
 
 /*
@@ -398,23 +520,35 @@ static const struct iio_event_spec lmp92001_events[] = {
  * Example driver/iio/dac/ad5064.c
  */
 static const struct iio_chan_spec lmp92001_adc_channels[] = {
-        LMP92001_CHAN_SPEC( 1, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC( 2, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC( 3, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC( 4, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC( 5, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC( 6, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC( 7, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC( 8, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC( 9, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC(10, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC(11, IIO_VOLTAGE, lmp92001_events, ARRAY_SIZE(lmp92001_events)),
-        LMP92001_CHAN_SPEC(12, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC(13, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC(14, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC(15, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC(16, IIO_VOLTAGE, NULL, 0),
-        LMP92001_CHAN_SPEC(17,    IIO_TEMP, NULL, 0),
+        LMP92001_CHAN_SPEC( 1, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC( 2, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC( 3, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC( 4, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC( 5, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC( 6, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC( 7, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC( 8, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC( 9, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC(10, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC(11, IIO_VOLTAGE,
+                        lmp92001_events, ARRAY_SIZE(lmp92001_events),
+                        lmp92001_irq_ext_info),
+        LMP92001_CHAN_SPEC(12, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC(13, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC(14, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC(15, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC(16, IIO_VOLTAGE, NULL, 0, lmp92001_ext_info),
+        LMP92001_CHAN_SPEC(17,    IIO_TEMP, NULL, 0, lmp92001_ext_info),
 };
 
 static int lmp92001_adc_probe(struct platform_device *pdev)
