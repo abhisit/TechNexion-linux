@@ -391,8 +391,13 @@ static const struct iio_enum lmp92001_enable_enum = {
         .set = lmp92001_enable_write,
 };
 
-static ssize_t lmp92001_mode_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static const char * const lmp92001_mode_opts[] = {
+        [0] = "single-shot",
+        [1] = "continuous",
+};
+
+static int lmp92001_mode_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cgen;
@@ -402,20 +407,19 @@ static ssize_t lmp92001_mode_read(struct iio_dev *indio_dev, uintptr_t private,
         if (ret < 0)
                 return ret;
 
-        return sprintf(buf, "%s\n", cgen & 1 ? "continuous" : "single-shot");
+        return (cgen & 1) ? 1 : 0;
 }
 
-static ssize_t lmp92001_mode_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_mode_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cgen;
         int ret;
 
-        if (strcmp("continuous\n", buf) == 0)
+        if (mode == 1)
                 cgen = 1;
-        else if (strcmp("single-shot\n", buf) == 0)
+        else if (mode == 0)
                 cgen = 0;
         else
                 return -EINVAL;
@@ -437,20 +441,23 @@ static ssize_t lmp92001_mode_write(struct iio_dev *indio_dev, uintptr_t private,
         if (ret < 0)
                 return ret;
 
-        return len;
+        return ret;
 }
+
+static const struct iio_enum lmp92001_mode_enum = {
+        .items = lmp92001_mode_opts,
+        .num_items = ARRAY_SIZE(lmp92001_mode_opts),
+        .get = lmp92001_mode_read,
+        .set = lmp92001_mode_write,
+};
 
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_vref_enum),
         IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
         IIO_ENUM("en", IIO_SEPARATE, &lmp92001_enable_enum),
         IIO_ENUM_AVAILABLE("en", &lmp92001_enable_enum),
-        {
-                .name = "mode",
-                .read = lmp92001_mode_read,
-                .write = lmp92001_mode_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("mode", IIO_SHARED_BY_ALL, &lmp92001_mode_enum),
+        IIO_ENUM_AVAILABLE("mode", &lmp92001_mode_enum),
         { },
 };
 
@@ -460,12 +467,8 @@ static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
         IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
         IIO_ENUM("en", IIO_SEPARATE, &lmp92001_enable_enum),
         IIO_ENUM_AVAILABLE("en", &lmp92001_enable_enum),
-        {
-                .name = "mode",
-                .read = lmp92001_mode_read,
-                .write = lmp92001_mode_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("mode", IIO_SHARED_BY_ALL, &lmp92001_mode_enum),
+        IIO_ENUM_AVAILABLE("mode", &lmp92001_mode_enum),
         /* End of lmp92001_ext_info */
         IIO_ENUM("hi_limit_en", IIO_SEPARATE, &lmp92001_limit_enum),
         IIO_ENUM_AVAILABLE("hi_limit_en", &lmp92001_limit_enum),
