@@ -309,8 +309,8 @@ static const struct iio_enum lmp92001_vref_enum = {
         .set = lmp92001_avref_write,
 };
 
-static ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static int lmp92001_enable_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int reg, cad;
@@ -344,16 +344,14 @@ static ssize_t lmp92001_enable_read(struct iio_dev *indio_dev, uintptr_t private
         else
                 return -EINVAL;
 
-        return sprintf(buf, "%s\n", cad & 1 ? "enable" : "disable");
+        return (cad & 1);
 }
 
-static ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_enable_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int reg, enable, shif, mask;
-        int ret;
 
         switch (channel->channel)
         {
@@ -373,9 +371,9 @@ static ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t privat
                 return -EINVAL;
         }
 
-        if (strcmp("enable\n", buf) == 0)
+        if (mode == 1)
                 enable = 1;
-        else if (strcmp("disable\n", buf) == 0)
+        else if (mode == 0)
                 enable = 0;
         else
                 return -EINVAL;
@@ -383,12 +381,15 @@ static ssize_t lmp92001_enable_write(struct iio_dev *indio_dev, uintptr_t privat
         enable <<= shif;
         mask = 1 << shif;
 
-        ret = regmap_update_bits(lmp92001->regmap, reg, mask, enable);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, reg, mask, enable);
 }
+
+static const struct iio_enum lmp92001_enable_enum = {
+        .items = lmp92001_enable_disable_opts,
+        .num_items = ARRAY_SIZE(lmp92001_enable_disable_opts),
+        .get = lmp92001_enable_read,
+        .set = lmp92001_enable_write,
+};
 
 static ssize_t lmp92001_mode_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
@@ -442,12 +443,8 @@ static ssize_t lmp92001_mode_write(struct iio_dev *indio_dev, uintptr_t private,
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_vref_enum),
         IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
-        {
-                .name = "en",
-                .read = lmp92001_enable_read,
-                .write = lmp92001_enable_write,
-                .shared = IIO_SEPARATE,
-        },
+        IIO_ENUM("en", IIO_SEPARATE, &lmp92001_enable_enum),
+        IIO_ENUM_AVAILABLE("en", &lmp92001_enable_enum),
         {
                 .name = "mode",
                 .read = lmp92001_mode_read,
@@ -461,12 +458,8 @@ static const struct iio_chan_spec_ext_info lmp92001_irq_ext_info[] = {
         /* Copy of lmp92001_ext_info */
         IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_vref_enum),
         IIO_ENUM_AVAILABLE("vref", &lmp92001_vref_enum),
-        {
-                .name = "en",
-                .read = lmp92001_enable_read,
-                .write = lmp92001_enable_write,
-                .shared = IIO_SEPARATE,
-        },
+        IIO_ENUM("en", IIO_SEPARATE, &lmp92001_enable_enum),
+        IIO_ENUM_AVAILABLE("en", &lmp92001_enable_enum),
         {
                 .name = "mode",
                 .read = lmp92001_mode_read,
