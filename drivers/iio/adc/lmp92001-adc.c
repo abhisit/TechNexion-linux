@@ -371,12 +371,7 @@ static int lmp92001_enable_write(struct iio_dev *indio_dev,
                 return -EINVAL;
         }
 
-        if (mode == 1)
-                enable = 1;
-        else if (mode == 0)
-                enable = 0;
-        else
-                return -EINVAL;
+        enable = mode;
 
         enable <<= shif;
         mask = 1 << shif;
@@ -417,12 +412,7 @@ static int lmp92001_mode_write(struct iio_dev *indio_dev,
         unsigned int cgen;
         int ret;
 
-        if (mode == 1)
-                cgen = 1;
-        else if (mode == 0)
-                cgen = 0;
-        else
-                return -EINVAL;
+        cgen = mode;
 
         /*
          * Unlock the registers.
