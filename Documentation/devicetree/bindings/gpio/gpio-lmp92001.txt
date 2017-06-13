@@ -8,7 +8,7 @@ Required properties:
   the second cell is used to specify the gpio polarity:
         0 = Active high
         1 = Active low
-- ti,lmp92001-gpio-dir: bit mask for internal pull-down.
+- ti,lmp92001-gpio-dir: bit mask for direction and internal pull-down.
         0 = Internal pull-down
         1 = Open
 
