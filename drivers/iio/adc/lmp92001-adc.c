@@ -564,7 +564,7 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
 
         irq = platform_get_irq(pdev, 0);
         if (irq < 0) {
-                dev_err(&pdev->dev, "No irq resource?\n");
+                dev_err(&pdev->dev, "no irq resource?\n");
                 return irq;
         }
 
@@ -582,7 +582,7 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
                                         IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
                                         dev_name(&pdev->dev), indio_dev);
         if (ret < 0) {
-                dev_err(&pdev->dev, "Failed requesting irq, irq = %d\n", irq);
+                dev_err(&pdev->dev, "failed requesting irq, irq = %d\n", irq);
                 return ret;
         }
 
