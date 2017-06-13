@@ -31,13 +31,13 @@ static ssize_t lmp92001_id_ver_show(struct device *dev,
 
         ret = regmap_read(lmp92001->regmap, LMP92001_ID, &comid);
         if (ret < 0) {
-                dev_err(lmp92001->dev, "Failed to read Company ID: %d\n", ret);
+                dev_err(lmp92001->dev, "failed to read Company ID: %d\n", ret);
                 return 0;
         }
 
         ret = regmap_read(lmp92001->regmap, LMP92001_VER, &ver);
         if (ret < 0) {
-                dev_err(lmp92001->dev, "Failed to read Version: %d\n", ret);
+                dev_err(lmp92001->dev, "failed to read Version: %d\n", ret);
                 return 0;
         }
 
@@ -54,7 +54,8 @@ int lmp92001_debug_init(struct lmp92001 *lmp92001)
 
         ret = device_create_file(lmp92001->dev, &dev_attr_lmp92001_id_ver);
         if (ret != 0)
-                dev_err(lmp92001->dev, "Unique ID attribute not created: %d\n",
+                dev_err(lmp92001->dev,
+                                "unique ID attribute is not created: %d\n",
                                 ret);
 
         return ret;
