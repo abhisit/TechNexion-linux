@@ -12,8 +12,8 @@ Required properties:
   the direction and the internal pull-down are shared register and similar to
   open-collector drive:
         0 = [O]utput and also meaning drive it to low
-        1 = [I]nput and also meaning drive it to high with required to have an
-        external resistor
+        1 = [I]nput and also meaning open, to drive it to high is required to
+        have an external resistor
 
 Example:
 lmp92001@20 {
