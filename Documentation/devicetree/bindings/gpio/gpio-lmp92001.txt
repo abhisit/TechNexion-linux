@@ -11,8 +11,9 @@ Required properties:
 - ti,lmp92001-gpio-dir: bit mask for direction and drive logic default. Since
   the direction and the internal pull-down are shared register and similar to
   open-collector drive:
-        0 = [O]utput and meaning drive it to low too
-        1 = [I]nput and meaning drive it to high too
+        0 = [O]utput and also meaning drive it to low
+        1 = [I]nput and also meaning drive it to high with required to have an
+        external resistor
 
 Example:
 lmp92001@20 {
