@@ -4,18 +4,17 @@ Required properties:
  - compatible: Must be set to "ti,lmp92001-gpio".
  - reg: i2c chip address for the device.
  - gpio-controller: Marks the device node as a gpio controller.
- - #gpio-cells : Should be two.  The first cell is the pin number and
-  the second cell is used to specify the gpio polarity:
+ - #gpio-cells : Should be two.  The first cell is the pin number and the
+  second cell is used to specify the gpio polarity:
         0 = Active high
         1 = Active low
-- ti,lmp92001-gpio-dir: bit mask for direction and internal pull-down.
-        0 = Internal pull-down
-        1 = Open
-
-Note:
-Since the direction and the internal pull-down are shared register!
-To use the GPIO as input must be set gpio-dir mask to 1 and recommended to have
-external pull-up resistor too. Synonym, 1 = [I]nput and 0 = [O]utput. 
+- ti,lmp92001-gpio-dir: bit mask for direction and drive logic default. Since
+  the direction and the internal pull-down are shared register and similar to
+  open-collector drive:
+        0 = [O]utput and mearning drive it to low too
+        1 = [I]nput or drive it to high
+  To use the GPIO as input must be set gpio-dir mask to 1 and recommended to
+  have external pull-up resistor too.
 
 Example:
 lmp92001@20 {
