@@ -4,7 +4,7 @@ Required properties:
  - compatible: Must be set to "ti,lmp92001-dac".
  - reg: i2c chip address for the device.
  - ti,lmp92001-dac-hiz: hi-impedance control,
-        1 = forces all OUT[1:12] outputs to to hi-z, 0 = normal.
+        1 = Forces all OUT[1:12] outputs to to hi-z, 0 = normal
  - ti,lmp92001-dac-outx: 
         Cy = 0, 1 = will force associated OUTx outputs to VDD
         Cy = 0, 0 = will force associated OUTx outputs to GND

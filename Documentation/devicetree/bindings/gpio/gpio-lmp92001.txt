@@ -6,8 +6,8 @@ Required properties:
  - gpio-controller: Marks the device node as a gpio controller.
  - #gpio-cells : Should be two.  The first cell is the pin number and
   the second cell is used to specify the gpio polarity:
-        0 = active high
-        1 = active low
+        0 = Active high
+        1 = Active low
 - ti,lmp92001-gpio-dir: bit mask for internal pull-down.
         0 = Open
         1 = Internal pull-down
