@@ -14,8 +14,8 @@ Required properties:
 
 Note:
 Since the direction and the internal pull-down are shared register!
-To use the GPIO as input must be set gpio-dir mask to 1. Synonym, 1 = [I]nput
-and 0 = [O]utput and recommended to have external pull-up resistor too.
+To use the GPIO as input must be set gpio-dir mask to 1 and recommended to have
+external pull-up resistor too. Synonym, 1 = [I]nput and 0 = [O]utput. 
 
 Example:
 lmp92001@20 {
