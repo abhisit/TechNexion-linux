@@ -127,7 +127,7 @@ static int lmp92001_i2c_probe(struct i2c_client *i2c,
 			&lmp92001_regmap_config);
 	if (IS_ERR(lmp92001->regmap)) {
 		ret = PTR_ERR(lmp92001->regmap);
-		dev_err(lmp92001->dev, "Failed to allocate register map: %d\n",
+		dev_err(lmp92001->dev, "failed to allocate register map: %d\n",
 			ret);
 		return ret;
 	}
