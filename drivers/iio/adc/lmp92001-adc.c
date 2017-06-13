@@ -1,14 +1,21 @@
 /*
- * lmp92001-adc.c -- Support for TI LMP92001 ADCs
+ * lmp92001-adc.c - Support for TI LMP92001 ADCs
  *
- * Copyright 2016 Celestica Ltd.
+ * Copyright 2016-2017 Celestica Ltd.
  *
  * Author: Abhisit Sangjan <asang@celestica.com>
  *
- *  This program is free software; you can redistribute  it and/or modify it
- *  under  the terms of  the GNU General  Public License as published by the
- *  Free Software Foundation;  either version 2 of the  License, or (at your
- *  option) any later version.
+ * Inspired by wm831x and ad5064 drivers.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
  */
 
