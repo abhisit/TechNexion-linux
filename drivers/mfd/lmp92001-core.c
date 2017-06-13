@@ -271,14 +271,14 @@ int lmp92001_device_init(struct lmp92001 *lmp92001, unsigned long id, int irq)
         ret  = regmap_read(lmp92001->regmap, LMP92001_ID, &comid);
         if (ret < 0)
         {
-                dev_err(lmp92001->dev, "Failed to read Company ID: %d\n", ret);
+                dev_err(lmp92001->dev, "failed to read Company ID: %d\n", ret);
                 goto exit;
         }
 
         ret  = regmap_read(lmp92001->regmap, LMP92001_VER, &ver);
         if (ret < 0)
         {
-                dev_err(lmp92001->dev, "Failed to read Version: %d\n", ret);
+                dev_err(lmp92001->dev, "failed to read Version: %d\n", ret);
                 goto exit;
         }
 
@@ -289,14 +289,14 @@ int lmp92001_device_init(struct lmp92001 *lmp92001, unsigned long id, int irq)
                                 lmp92001_devs, ARRAY_SIZE(lmp92001_devs),
                                 NULL, 0, NULL);
         if (ret != 0) {
-                dev_err(lmp92001->dev, "Failed to add children\n");
+                dev_err(lmp92001->dev, "failed to add children\n");
                 goto exit;
         }
 
         ret = lmp92001_debug_init(lmp92001);
         if (ret < 0)
         {
-                dev_err(lmp92001->dev, "Failed to initial debug fs.\n");
+                dev_err(lmp92001->dev, "failed to initial debug fs.\n");
                 goto exit;
         }
 
