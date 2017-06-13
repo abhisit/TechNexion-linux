@@ -8,7 +8,7 @@ Required properties:
  - ti,lmp92001-dac-outx: 
         Cy = 0, 1 = will force associated OUTx outputs to VDD
         Cy = 0, 0 = will force associated OUTx outputs to GND
- - ti,lmp92001-dac-gang: Enable/disable Asynchronous Output Control.
+ - ti,lmp92001-dac-gang: Group of Cy is governed to.
         -----------------------------------------
         |  Cy   | CDAC:GANG = 0 | CDAC:GANG = 1 |
         -----------------------------------------
