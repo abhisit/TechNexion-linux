@@ -165,7 +165,7 @@ static int lmp92001_gpio_probe(struct platform_device *pdev)
 
         lmp92001_gpio = devm_kzalloc(&pdev->dev, sizeof(*lmp92001_gpio),
                                         GFP_KERNEL);
-        if (lmp92001_gpio == NULL)
+        if (!lmp92001_gpio)
                 return -ENOMEM;
 
         lmp92001_gpio->lmp92001 = lmp92001;
