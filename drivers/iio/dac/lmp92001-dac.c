@@ -94,8 +94,13 @@ static const struct iio_info lmp92001_info = {
         .driver_module = THIS_MODULE,
 };
 
-ssize_t lmp92001_dvref_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static const char * const lmp92001_dvref_opts[] = {
+        [0] = "internal",
+        [1] = "external",
+};
+
+static int lmp92001_dvref_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cref;
@@ -105,30 +110,31 @@ ssize_t lmp92001_dvref_read(struct iio_dev *indio_dev, uintptr_t private,
         if (ret < 0)
                 return ret;
 
-        return sprintf(buf, "%s\n", cref & 1 ? "external" : "internal");
+        return cref & 1;
 }
 
-ssize_t lmp92001_dvref_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_dvref_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cref;
-        int ret;
 
-        if (strcmp("external\n", buf) == 0)
+        if (mode == 1)
                 cref = 1;
-        else if (strcmp("internal\n", buf) == 0)
+        else if (mode == 0)
                 cref = 0;
         else
                 return -EINVAL;
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CREF, 1, cref);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, LMP92001_CREF, 1, cref);
 }
+
+static const struct iio_enum lmp92001_dvref_enum = {
+        .items = lmp92001_dvref_opts,
+        .num_items = ARRAY_SIZE(lmp92001_dvref_opts),
+        .get = lmp92001_dvref_read,
+        .set = lmp92001_dvref_write,
+};
 
 ssize_t lmp92001_outx_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
@@ -230,12 +236,8 @@ ssize_t lmp92001_gang_write(struct iio_dev *indio_dev, uintptr_t private,
 }
 
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
-        {
-                .name = "vref",
-                .read = lmp92001_dvref_read,
-                .write = lmp92001_dvref_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_dvref_enum),
+        IIO_ENUM_AVAILABLE("vref", &lmp92001_dvref_enum),
         {
                 .name = "outx",
                 .read = lmp92001_outx_read,
