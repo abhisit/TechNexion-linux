@@ -164,11 +164,6 @@ static int lmp92001_read_raw(struct iio_dev *indio_dev,
         return -EINVAL;
 }
 
-/*
- * TODO: do your attributes even handler for
- * Current limit low/high for CH 1-3, 9-11!
- * In case INT1 and INT2 were connected to i.MX6.
- */
 static const struct iio_info lmp92001_info = {
         .read_raw = lmp92001_read_raw,
         .driver_module = THIS_MODULE,
