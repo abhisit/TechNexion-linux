@@ -501,10 +501,6 @@ static const struct iio_event_spec lmp92001_events[] = {
         .ext_info = _extinfo, \
 }
 
-/*
- * TODO: do your ext_info for current low/high limit.
- * Example driver/iio/dac/ad5064.c
- */
 static const struct iio_chan_spec lmp92001_adc_channels[] = {
         LMP92001_CHAN_SPEC( 1, IIO_VOLTAGE,
                         lmp92001_events, ARRAY_SIZE(lmp92001_events),
