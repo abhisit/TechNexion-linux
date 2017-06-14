@@ -55,8 +55,7 @@ int lmp92001_debug_init(struct lmp92001 *lmp92001)
         ret = device_create_file(lmp92001->dev, &dev_attr_lmp92001_id_ver);
         if (ret != 0)
                 dev_err(lmp92001->dev,
-                                "unique ID attribute is not created: %d\n",
-                                ret);
+                        "unique ID attribute is not created: %d\n", ret);
 
         return ret;
 }
