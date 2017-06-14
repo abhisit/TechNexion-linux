@@ -57,9 +57,6 @@ static const u64 lmp92001_event_codes[] = {
                                 IIO_EV_TYPE_THRESH, IIO_EV_DIR_FALLING),
 };
 
-/**
- * TODO: good example at drivers/iio/adc/max1363.c
- */
 static irqreturn_t lmp92001_adc_isr(int irq, void *dev_id)
 {
         struct iio_dev *indio_dev = dev_id;
