@@ -29,6 +29,10 @@
 #include <linux/err.h>
 #include <linux/mfd/lmp92001/core.h>
 
+static const unsigned short lmp92001_i2c_adresses[] = {
+        0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E, 0x50, I2C_CLIENT_END
+};
+
 /* Todo: To read/write block access, it may need to re-ordering endianness! */
 static int lmp92001_reg_read(void *context, unsigned int reg, unsigned int *val)
 {
@@ -157,15 +161,35 @@ static const struct i2c_device_id lmp92001_i2c_ids[] = {
 };
 MODULE_DEVICE_TABLE(i2c, lmp92001_i2c_ids);
 
+static int lmp92001_i2c_detect(struct i2c_client *i2c,
+                struct i2c_board_info *info)
+{
+        struct i2c_adapter *adapter = i2c->adapter;
+        s32 comid, ver;
+
+        if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_READ_BYTE_DATA))
+                return -ENODEV;
+
+        comid = i2c_smbus_read_byte_data(i2c, LMP92001_ID);
+        ver = i2c_smbus_read_byte_data(i2c, LMP92001_VER);
+
+        if (comid != 0x01 || ver != 0x10)
+                return -ENODEV;
+
+        return 0;
+}
+
 static struct i2c_driver lmp92001_i2c_driver = {
 	.driver = {
 		.owner = THIS_MODULE,
 		.name = "lmp92001",
 		.of_match_table = of_match_ptr(lmp92001_dt_ids),
 	},
-	.probe = lmp92001_i2c_probe,
-	.remove = lmp92001_i2c_remove,
+	.probe          = lmp92001_i2c_probe,
+	.remove         = lmp92001_i2c_remove,
 	.id_table	= lmp92001_i2c_ids,
+	.detect         = lmp92001_i2c_detect,
+	.address_list   = lmp92001_i2c_adresses,
 };
 
 static int __init lmp92001_i2c_init(void)
