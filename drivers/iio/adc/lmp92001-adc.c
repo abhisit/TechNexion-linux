@@ -549,7 +549,7 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
         int ret;
 
         indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*lmp92001));
-        if (indio_dev == NULL)
+        if (!indio_dev)
                 return -ENOMEM;
 
         iio_device_set_drvdata(indio_dev, lmp92001);
