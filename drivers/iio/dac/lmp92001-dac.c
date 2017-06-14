@@ -209,8 +209,13 @@ static const struct iio_enum lmp92001_outx_enum = {
         .set = lmp92001_outx_write,
 };
 
-ssize_t lmp92001_gang_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static const char * const lmp92001_gang_opts[] = {
+        [0] = "0",
+        [1] = "1",
+};
+
+static int lmp92001_gang_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cdac;
@@ -220,42 +225,45 @@ ssize_t lmp92001_gang_read(struct iio_dev *indio_dev, uintptr_t private,
         if (ret < 0)
                 return ret;
 
-        return sprintf(buf, "%s\n", cdac & 4 ? "1" : "0");
+        return (cdac & 4);
 }
 
-ssize_t lmp92001_gang_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_gang_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cdac = 0;
-        int ret;
 
-        if (strcmp("0\n", buf) == 0)
+        switch (mode)
+        {
+        case 0:
                 cdac = 0;
-        else if (strcmp("1\n", buf) == 0)
+                break;
+        case 1:
                 cdac = 4;
-        else
+                break;
+        default:
                 return -EINVAL;
+                break;
+        }
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CDAC, 4, cdac);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, LMP92001_CDAC, 4, cdac);
 }
+
+static const struct iio_enum lmp92001_gang_enum = {
+        .items = lmp92001_gang_opts,
+        .num_items = ARRAY_SIZE(lmp92001_gang_opts),
+        .get = lmp92001_gang_read,
+        .set = lmp92001_gang_write,
+};
 
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_dvref_enum),
         IIO_ENUM_AVAILABLE("vref", &lmp92001_dvref_enum),
         IIO_ENUM("outx", IIO_SHARED_BY_ALL, &lmp92001_outx_enum),
         IIO_ENUM_AVAILABLE("outx", &lmp92001_outx_enum),
-        {
-                .name = "gang",
-                .read = lmp92001_gang_read,
-                .write = lmp92001_gang_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("gang", IIO_SHARED_BY_ALL, &lmp92001_gang_enum),
+        IIO_ENUM_AVAILABLE("gang", &lmp92001_gang_enum),
         { },
 };
 
