@@ -27,6 +27,7 @@
 #include <linux/of_gpio.h>
 #include <linux/i2c.h>
 #include <linux/err.h>
+
 #include <linux/mfd/lmp92001/core.h>
 
 static const unsigned short lmp92001_i2c_adresses[] = {

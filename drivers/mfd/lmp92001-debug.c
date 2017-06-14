@@ -20,6 +20,7 @@
  */
 
 #include <linux/kernel.h>
+
 #include <linux/mfd/lmp92001/core.h>
 
 static ssize_t lmp92001_id_ver_show(struct device *dev,
