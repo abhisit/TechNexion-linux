@@ -136,68 +136,78 @@ static const struct iio_enum lmp92001_dvref_enum = {
         .set = lmp92001_dvref_write,
 };
 
-ssize_t lmp92001_outx_read(struct iio_dev *indio_dev, uintptr_t private,
-                        struct iio_chan_spec const *channel, char *buf)
+static const char * const lmp92001_outx_opts[] = {
+        [0] = "0",
+        [1] = "1",
+        [2] = "dac",
+        [3] = "hiz",
+        [4] = "0 or dac",
+        [5] = "1 or dac",
+};
+
+static int lmp92001_outx_read(struct iio_dev *indio_dev,
+                struct iio_chan_spec const *channel)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cdac;
-        const char *outx;
         int ret;
+        unsigned int mode;
 
         ret = regmap_read(lmp92001->regmap, LMP92001_CDAC, &cdac);
         if (ret < 0)
                 return ret;
 
         if (cdac & 1)
-                outx = "hiz";
+                mode = 3;
         else
         {
                 if (cdac & 2)
-                        outx = "1 or dac";
+                        mode = 5;
                 else
-                        outx = "0 or dac";
+                        mode = 4;
         }
 
-        return sprintf(buf, "%s\n", outx);
+        return mode;
 }
 
-ssize_t lmp92001_outx_write(struct iio_dev *indio_dev, uintptr_t private,
-                         struct iio_chan_spec const *channel, const char *buf,
-                         size_t len)
+static int lmp92001_outx_write(struct iio_dev *indio_dev,
+                const struct iio_chan_spec *channel, unsigned int mode)
 {
         struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
         unsigned int cdac, mask;
-        int ret;
 
-        if (strcmp("hiz\n", buf) == 0)
+        switch (mode)
         {
+        case 3:
                 cdac = 1;
                 mask = 1;
-        }
-        else if (strcmp("dac\n", buf) == 0)
-        {
+                break;
+        case 2:
                 cdac = 0;
                 mask = 1;
-        }
-        else if (strcmp("0\n", buf) == 0)
-        {
-                cdac = 0;
-                mask = 3;
-        }
-        else if (strcmp("1\n", buf) == 0)
-        {
+                break;
+        case 1:
                 cdac = 2;
                 mask = 3;
-        }
-        else
+                break;
+        case 0:
+                cdac = 0;
+                mask = 3;
+                break;
+        default:
                 return -EINVAL;
+                break;
+        }
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CDAC, mask, cdac);
-        if (ret < 0)
-                return ret;
-
-        return len;
+        return regmap_update_bits(lmp92001->regmap, LMP92001_CDAC, mask, cdac);
 }
+
+static const struct iio_enum lmp92001_outx_enum = {
+        .items = lmp92001_outx_opts,
+        .num_items = ARRAY_SIZE(lmp92001_outx_opts),
+        .get = lmp92001_outx_read,
+        .set = lmp92001_outx_write,
+};
 
 ssize_t lmp92001_gang_read(struct iio_dev *indio_dev, uintptr_t private,
                         struct iio_chan_spec const *channel, char *buf)
@@ -238,12 +248,8 @@ ssize_t lmp92001_gang_write(struct iio_dev *indio_dev, uintptr_t private,
 static const struct iio_chan_spec_ext_info lmp92001_ext_info[] = {
         IIO_ENUM("vref", IIO_SHARED_BY_ALL, &lmp92001_dvref_enum),
         IIO_ENUM_AVAILABLE("vref", &lmp92001_dvref_enum),
-        {
-                .name = "outx",
-                .read = lmp92001_outx_read,
-                .write = lmp92001_outx_write,
-                .shared = IIO_SHARED_BY_ALL,
-        },
+        IIO_ENUM("outx", IIO_SHARED_BY_ALL, &lmp92001_outx_enum),
+        IIO_ENUM_AVAILABLE("outx", &lmp92001_outx_enum),
         {
                 .name = "gang",
                 .read = lmp92001_gang_read,
