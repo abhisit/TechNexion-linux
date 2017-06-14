@@ -28,9 +28,8 @@
 #include <linux/i2c.h>
 #include <linux/err.h>
 #include <linux/mfd/lmp92001/core.h>
-/*
- * Fixme: read/write routine in case of block needed to re-ordering endianness!
- */
+
+/* Todo: To read/write block access, it may need to re-ordering endianness! */
 static int lmp92001_reg_read(void *context, unsigned int reg, unsigned int *val)
 {
 	struct device *dev = context;
@@ -85,7 +84,7 @@ static int lmp92001_reg_write(void *context, unsigned int reg, unsigned int val)
 	case LMP92001_DAC1 ... LMP92001_DALL:
 		ret = i2c_smbus_write_word_swapped(i2c, reg, val);
 	break;
-	/* call this function and passing val as pointer */
+	/* To call this function/case, must be passed val as pointer */
 	case LMP92001_BLK0:
 	case LMP92001_BLK4:
 		ret = i2c_smbus_write_block_data(i2c, reg, 24, (u8*)val);
@@ -114,7 +113,7 @@ static int lmp92001_i2c_probe(struct i2c_client *i2c,
 	int ret;
 
 	lmp92001 = devm_kzalloc(&i2c->dev, sizeof(struct lmp92001), GFP_KERNEL);
-	if (lmp92001 == NULL)
+	if (!lmp92001)
 		return -ENOMEM;
 
 	i2c_set_clientdata(i2c, lmp92001);
@@ -128,7 +127,7 @@ static int lmp92001_i2c_probe(struct i2c_client *i2c,
 	if (IS_ERR(lmp92001->regmap)) {
 		ret = PTR_ERR(lmp92001->regmap);
 		dev_err(lmp92001->dev, "failed to allocate register map: %d\n",
-			ret);
+		                ret);
 		return ret;
 	}
 
