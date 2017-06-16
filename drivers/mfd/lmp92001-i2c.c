@@ -168,7 +168,10 @@ static int lmp92001_i2c_detect(struct i2c_client *i2c,
         struct i2c_adapter *adapter = i2c->adapter;
         s32 comid, ver;
 
-        if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_READ_BYTE_DATA))
+        if (!i2c_check_functionality(adapter,
+                                        I2C_FUNC_SMBUS_BYTE_DATA |
+                                        I2C_FUNC_SMBUS_WORD_DATA |
+                                        I2C_FUNC_SMBUS_BLOCK_DATA))
                 return -ENODEV;
 
         comid = i2c_smbus_read_byte_data(i2c, LMP92001_ID);
