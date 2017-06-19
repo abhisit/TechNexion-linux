@@ -209,5 +209,5 @@ static void __exit lmp92001_i2c_exit(void)
 module_exit(lmp92001_i2c_exit);
 
 MODULE_DESCRIPTION("i2c driver for TI LMP92001");
-MODULE_AUTHOR("Abhisit Sangjan <asang@celestica.com");
+MODULE_AUTHOR("Abhisit Sangjan <s.abhisit@gmail.com>");
 MODULE_LICENSE("GPL");

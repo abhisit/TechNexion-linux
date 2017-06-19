@@ -361,7 +361,7 @@ static void __exit lmp92001_dac_exit(void)
 }
 module_exit(lmp92001_dac_exit);
 
-MODULE_AUTHOR("Abhisit Sangjan <asang@celestica.com");
+MODULE_AUTHOR("Abhisit Sangjan <s.abhisit@gmail.com>");
 MODULE_DESCRIPTION("IIO DAC interface for TI LMP92001");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:lmp92001-dac");

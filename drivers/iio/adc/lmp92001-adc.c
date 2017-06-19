@@ -672,7 +672,7 @@ static void __exit lmp92001_adc_exit(void)
 }
 module_exit(lmp92001_adc_exit);
 
-MODULE_AUTHOR("Abhisit Sangjan <asang@celestica.com");
+MODULE_AUTHOR("Abhisit Sangjan <s.abhisit@gmail.com>");
 MODULE_DESCRIPTION("IIO ADC interface for TI LMP92001");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:lmp92001-adc");
