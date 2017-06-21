@@ -57,46 +57,6 @@ static const u64 lmp92001_event_codes[] = {
                                 IIO_EV_TYPE_THRESH, IIO_EV_DIR_FALLING),
 };
 
-static irqreturn_t lmp92001_adc_isr(int irq, void *dev_id)
-{
-        struct iio_dev *indio_dev = dev_id;
-        struct lmp92001 *lmp92001 = iio_device_get_drvdata(indio_dev);
-        s64 timestamp = iio_get_time_ns();
-        unsigned int shil, slol;
-        unsigned long bit, sxxl;
-        int ret;
-
-        /**
-         * High-Limit: if ADCx > LIHx
-         */
-        ret = regmap_read(lmp92001->regmap, LMP92001_SHIL, &shil);
-        if (ret < 0)
-                return ret;
-
-        sxxl = shil;
-
-        for_each_set_bit(bit, &sxxl, 8)
-                iio_push_event(indio_dev,
-                lmp92001_event_codes[bit],
-                timestamp);
-
-        /**
-         * Low-Limit: if ADCx <= LIHx
-         */
-        ret = regmap_read(lmp92001->regmap, LMP92001_SLOL, &slol);
-        if (ret < 0)
-                return ret;
-
-        sxxl = slol;
-
-        for_each_set_bit(bit, &sxxl, 8)
-                iio_push_event(indio_dev,
-                lmp92001_event_codes[bit + (ARRAY_SIZE(lmp92001_event_codes)/2)],
-                timestamp);
-
-        return IRQ_HANDLED;
-}
-
 static int lmp92001_read_raw(struct iio_dev *indio_dev,
                                 struct iio_chan_spec const *channel, int *val,
                                 int *val2, long mask)
@@ -541,7 +501,6 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
         const char *conversion;
         unsigned int cgen = 0, cad1, cad2, cad3;
         u32 mask;
-        int irq;
         int ret;
 
         indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*lmp92001));
@@ -550,30 +509,12 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
 
         iio_device_set_drvdata(indio_dev, lmp92001);
 
-        irq = platform_get_irq(pdev, 0);
-        if (irq < 0) {
-                dev_err(&pdev->dev, "no irq resource?\n");
-                return irq;
-        }
-
         indio_dev->name = pdev->name;
         indio_dev->dev.parent = &pdev->dev;
         indio_dev->modes = INDIO_DIRECT_MODE;
         indio_dev->info = &lmp92001_info;
         indio_dev->channels = lmp92001_adc_channels;
         indio_dev->num_channels = ARRAY_SIZE(lmp92001_adc_channels);
-
-        ret = devm_request_threaded_irq(&pdev->dev,
-                                        irq,
-                                        NULL,
-                                        lmp92001_adc_isr,
-                                        IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
-                                        dev_name(&pdev->dev),
-                                        indio_dev);
-        if (ret < 0) {
-                dev_err(&pdev->dev, "failed requesting irq, irq = %d\n", irq);
-                return ret;
-        }
 
         ret = regmap_update_bits(lmp92001->regmap, LMP92001_CGEN, 0x80, 0x80);
         if (ret < 0)
