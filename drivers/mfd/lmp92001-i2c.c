@@ -3,7 +3,7 @@
  *
  * Copyright 2016-2017 Celestica Ltd.
  *
- * Author: Abhisit Sangjan <asang@celestica.com>
+ * Author: Abhisit Sangjan <s.abhisit@gmail.com>
  *
  * Inspired by wm831x driver.
  *
