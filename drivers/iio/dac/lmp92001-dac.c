@@ -323,8 +323,7 @@ static int lmp92001_dac_probe(struct platform_device *pdev)
         of_property_read_u8(np, "ti,lmp92001-dac-gang", &gang);
         cdac |= gang << 2;
 
-        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CDAC,
-                                        7, cdac);
+        ret = regmap_update_bits(lmp92001->regmap, LMP92001_CDAC, 7, cdac);
         if (ret < 0)
                 return ret;
 

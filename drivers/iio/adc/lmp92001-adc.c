@@ -568,7 +568,8 @@ static int lmp92001_adc_probe(struct platform_device *pdev)
                                         NULL,
                                         lmp92001_adc_isr,
                                         IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
-                                        dev_name(&pdev->dev), indio_dev);
+                                        dev_name(&pdev->dev),
+                                        indio_dev);
         if (ret < 0) {
                 dev_err(&pdev->dev, "failed requesting irq, irq = %d\n", irq);
                 return ret;

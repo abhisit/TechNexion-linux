@@ -34,7 +34,7 @@ static const unsigned short lmp92001_i2c_adresses[] = {
         0x40, 0x42, 0x44, 0x46, 0x48, 0x4A, 0x4C, 0x4E, 0x50, I2C_CLIENT_END
 };
 
-/* Todo: To read/write block access, it may need to re-ordering endianness! */
+/* TODO: To read/write block access, it may need to re-ordering endianness! */
 static int lmp92001_reg_read(void *context, unsigned int reg, unsigned int *val)
 {
 	struct device *dev = context;
